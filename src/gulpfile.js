@@ -13,11 +13,10 @@ const pugData = require('./pug/data.js');
 
 const OUTPUT_DIR = '..';
 
-const JS_BUNDLE_NAME = 'bundle';
-
 const paths = {
   html: {
     src: ['./pug/**/*.pug', '!./pug/include/**/*.pug', '!./pug/tpl/**/*.pug', '!./pug/sections/**/*.pug'],
+    watchSrc: './pug/**/*.pug',
     dest: `${OUTPUT_DIR}`,
   },
   styles: {
@@ -25,8 +24,15 @@ const paths = {
     dest: `${OUTPUT_DIR}/assets/css`,
   },
   scripts: {
-    src: './js/*.js',
+    src: './js/main.js',
+    watchSrc: ['./js/**/*.js', '!./js/dependencies.js'],
     dest: `${OUTPUT_DIR}/assets/js`,
+    filename: 'bundle',
+  },
+  dependencies: {
+    src: './js/dependencies.js',
+    dest: `${OUTPUT_DIR}/assets/js`,
+    filename: 'dependencies',
   },
 };
 
@@ -51,36 +57,48 @@ function styles() {
     .pipe(gulp.dest(paths.styles.dest));
 }
 
-function scripts() {
+function es(entrypoint, outputName) {
   return browserify({
     extensions: ['.js', '.jsx'],
-    entries: './js/main.js',
+    entries: entrypoint,
+    debug: true,
   })
-    .transform('babelify', { presets: ['@babel/env'] })
+    .transform('babelify', { presets: ['@babel/env'], sourceMaps: true })
     .on('error', (msg) => {
       // eslint-disable-next-line no-console
       console.error(msg);
     })
     .bundle()
-    .pipe(source(`${JS_BUNDLE_NAME}.js`))
+    .pipe(source(`${outputName}.js`))
     .pipe(buffer())
-    .pipe(sourcemaps.init())
+    .pipe(sourcemaps.init({ loadMaps: true }))
     .pipe(gulp.dest(paths.scripts.dest))
     .pipe(uglify())
-    .pipe(rename(`${JS_BUNDLE_NAME}.min.js`))
+    .pipe(rename(`${outputName}.min.js`))
     .pipe(sourcemaps.write('.'))
     .pipe(gulp.dest(paths.scripts.dest));
 }
 
-function watch() {
-  gulp.watch(paths.styles.src, styles);
-  gulp.watch(paths.scripts.src, scripts);
+function dependencies() {
+  return es(paths.dependencies.src, paths.dependencies.filename);
 }
 
-const build = gulp.parallel(html, styles, scripts);
+function scripts() {
+  return es(paths.scripts.src, paths.scripts.filename);
+}
+
+function watch() {
+  gulp.watch(paths.html.watchSrc || paths.html.src, html);
+  gulp.watch(paths.styles.watchSrc || paths.styles.src, styles);
+  gulp.watch(paths.dependencies.watchSrc || paths.dependencies.src, dependencies);
+  gulp.watch(paths.scripts.watchSrc || paths.scripts.src, scripts);
+}
+
+const build = gulp.parallel(html, styles, scripts, dependencies);
 
 exports.html = html;
 exports.styles = styles;
+exports.dependencies = dependencies;
 exports.scripts = scripts;
 exports.watch = watch;
 

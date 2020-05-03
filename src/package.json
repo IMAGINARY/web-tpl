@@ -6,7 +6,7 @@
   "author": "My Name <info@imaginary.org>",
   "private": true,
   "engines": {
-    "node": "^10.14.0"
+    "node": ">=10.14.0"
   },
   "dependencies": {},
   "devDependencies": {
