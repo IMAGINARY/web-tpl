@@ -51,7 +51,10 @@ After it runs succesfuly you can compile as needed:
 - **scripts (ES6)**
     ```
     gulp scripts
+    gulp dependencies
     ```
+
+Either of these can be run separately.
 
 - **pug (HTML pages)**
     ```
@@ -61,4 +64,9 @@ After it runs succesfuly you can compile as needed:
 - **all**
     ```
     yarn run build
+    ```
+
+- **Watch and compile automatically on changes**
+    ```
+    gulp watch
     ```
